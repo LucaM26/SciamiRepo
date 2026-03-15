@@ -1,20 +1,46 @@
 #include <cmath>
+#include <string>
 #include <vector>
-#include <fstream>
 #include <iostream>
-#include <array>
-#include <cstring>
+#include <algorithm>
 
 #include <TGraph.h>
 #include <TCanvas.h>
 #include <TTree.h>
 #include <TAxis.h>
+#include <TF1.h>
 #include <TGraphErrors.h>
+#include <TFile.h>
+#include <TLegend.h>
 
-#include "FlagClass.h"
 #include "Rate.h"
 
-void rateGraph(TTree *t, double Dt){
+
+void Container::Fill(double y_val, double yerr_val){
+
+        y.push_back(y_val);
+        y_err.push_back(yerr_val);
+
+}
+
+TGraphErrors* rateGraph (std::vector<double> x, std::vector<double> y,std::vector<double> x_err, std::vector<double> y_err){
+
+    TGraphErrors *g = new TGraphErrors(x.size(), x.data(), y.data(), x_err.data(), y_err.data());
+    g->SetMarkerStyle(20);
+    g->SetMarkerSize(1.2);
+    g->SetMinimum(0);
+    g->SetTitle("Rate vs Tempo");
+    g->GetXaxis()->SetTitle("Tempo [h]");
+    g->GetYaxis()->SetTitle("Rate [Hz]");
+
+    TF1 *f = new TF1("f", "[0]", 0, *std::max_element(x.begin(), x.end()));
+    f->SetParameters(5);
+    g->Fit("f", "S");
+    return g;
+
+};
+
+void rateMain(TTree *t, int n_ch, double Dt){
 
     //Allestimento del Tree
 
@@ -26,163 +52,109 @@ void rateGraph(TTree *t, double Dt){
 
     //Numero di eventi
 
-    Long64_t N = t->GetEntries();
+    ULong64_t N = t->GetEntries();
 
-    //Variabili temporali
+    //Variabili temporali e di conteggio
 
-    double elapsed_time = 0.;
-    double total_time = 0.;
-
-    //Variabili di conteggio
-
-    std::array<int,3> triples = {0,0,0};
-
-    std::array<int,3> doubles = {0,0,0};
-
-    //Indice del loop while
-
-    int k = 0;
-
-    //Strutture e vettori per i plot vari
-
-    TelData rate;
-
-    TelData err_rate;
-
-    TelData eff;
-
-    TelData err_eff;
-
+    double el = 0.;
+    double tot = 0.;
     std::vector<double> timings;
-
     std::vector<double> timings_err;
+    std::vector<double> counter(n_ch,0.);
 
-    //Elaborazione e  riempimento
+    //Container
 
-    while (elapsed_time < Dt && k < N){
+    std::vector<Container> data(n_ch);
+
+    //Indice del while
+
+    ULong64_t k = 0;
+
+    //Passo del loop, 4 nella versione definitiva
+
+    int step = n_ch/3;
+
+    while (k < N) {
 
         t->GetEntry(k);
 
-        Flag Channel;
+        if (ch == 2147483648) {
 
-        if (Channel.IsResetKW(ch)) {
-
-            elapsed_time += 5;
-            total_time += 5; 
-
-            if (elapsed_time >= Dt){
-
-                elapsed_time *= 0;
-
-                timings.push_back(total_time);
-
-                timings_err.push_back(5./3600);
-
-                for (int i = 0; i < 3; i++){
-
-                if (doubles[i] != 0){
-
-                    rate[i].push_back(triples[i]/Dt);
-
-                    err_rate[i].push_back(sqrt(triples[i])/Dt);
-
-                    double r = (double)triples[i]/(double)doubles[i];
-
-                    eff[i].push_back(r);
-
-                    err_eff[i].push_back(sqrt(r * (1-r)/(double)doubles[i]));
-
-
-                }
-
-                    triples[i] *= 0;
-                    doubles[i] *= 0;
-                }
-
-            }
+            el += 5;
+            tot += 5./3600; 
 
         }
 
-        if (Channel.IsTriple08(ch)) {triples[0] += 1;}
+        for (int j = 0; j < n_ch; j++){
 
-        if (Channel.IsTriple06(ch)) {triples[1] += 1;}
+            if (((ch >> j) & 1) && (ch != 2147483648)){
 
-        if (Channel.IsTriple04(ch)) {triples[2] += 1;}
+                counter[j] += 1; 
+            }
+        }
 
-        if (Channel.IsDouble08(ch)) {doubles[0] += 1;}
+        if (el >= Dt){
 
-        if (Channel.IsDouble06(ch)) {doubles[1] += 1;}
+            el = 0.;
 
-        if (Channel.IsDouble04(ch)) {doubles[2] += 1;}
+            timings.push_back(tot);
+            timings_err.push_back(5./3600);
 
-        k += 1;
+            for (int l = 0; l < n_ch; l++){
+
+                data[l].Fill(counter[l]/Dt,std::sqrt(counter[l])/Dt);
+
+                counter[l] = 0.;
+            }
+        }
+
+        k++;
 
     }
 
-    
+    //Da inserire la correzione dell'efficienza
 
-    //Grafici per i rate in funzione del tempo/efficienze
+    int n_files = n_ch / step;
 
-    for (size_t j = 0; j < rate.size(); j++) {
-        // Grafico Rate vs tempo
+    std::vector<double> maxes = {15, 2, 10};
 
-        std::cout << "rate size = " << rate[j].size() << std::endl;
-        std::cout << "band = " << calculate_band(rate[j]) << std::endl;
+    for (int n = 0; n < n_files; n ++){
 
-        TGraphErrors* g = new TGraphErrors(timings.size(), timings.data(), rate[j].data(), timings_err.data(), err_rate[j].data());
-        g->SetMarkerStyle(21);
-        g->SetMarkerColor(kRed);
-        g->SetLineColor(kBlack);
-        g->SetTitle("Rate vs tempo");
-        g->GetXaxis()->SetTitle("Tempo [h]");
-        g->GetYaxis()->SetTitle("Rate [Hz]");
+        TCanvas* c = new TCanvas(Form("c_setup_%d", n), "Rate vs Tempo", 800, 600);
 
-        // Canvas unico per ogni grafico
-        TCanvas* c = new TCanvas(Form("c_%zu", j), Form("Canvas_%zu", j), 800, 600);
-        g->Draw("AP");
+        TLegend* legend = new TLegend(0.7, 0.7, 0.9, 0.9);
+        legend->SetHeader("Tipo di evento","C");
+
+        bool first = true;
+
+        for (int ch_index = n*step; ch_index < (n+1)*step; ch_index++){
+
+            TGraphErrors* g = rateGraph(timings, data[ch_index].y, timings_err, data[ch_index].y_err);
+
+            g->SetMarkerColor(ch_index+1);   
+            g->SetLineColor(ch_index+1);
+            g->SetMaximum(maxes[n]);
+
+            g->Draw(first ? "AP" : "P SAME");
+            first = false;
+
+            std::string label = (ch_index % step == 0 ? "Triple" : "Doppie");
+            legend->AddEntry(g, label.c_str(), "p");
+        }
+
+        legend->Draw("SAME");
         c->Update();
+        
+        std::string name = "Rates_setup" + std::to_string(n+1) + ".root";
+        TFile* f = new TFile(name.c_str(), "RECREATE");
 
-        // Grafico Efficienza vs tempo 
-        TGraphErrors* g_e = new TGraphErrors(timings.size(), timings.data(), eff[j].data(), timings_err.data(), err_eff[j].data());
-        g_e->SetMarkerStyle(21);
-        g_e->SetMarkerColor(kBlue); // cambia colore per distinguere
-        g_e->SetLineColor(kBlack);
-        g_e->SetTitle("Efficienza vs tempo");
-        g_e->GetXaxis()->SetTitle("Tempo [h]");
-        g_e->GetYaxis()->SetTitle("Efficienza [%]");
-
-        TCanvas* c_e = new TCanvas(Form("c_e_%zu", j), Form("Canvas_e_%zu", j), 800, 600);
-        g_e->Draw("AP");
-        c_e->Update();
-
+        c->Write();
+        f->Close();
+        delete c;
     }
 
 }
 
-double calculate_band(const std::vector<double>& v) {
 
-    ULong64_t N = v.size();
 
-    double sum = 0;
 
-    for (ULong64_t k = 0; k < N; k++){
-
-        sum += v[k];
-
-    }
-
-    double avg = sum /N;
-
-    std::vector<double> diff;
-
-    for (ULong64_t l = 0; l < N; l++){
-
-        diff.push_back(std::abs(v[l]-avg));
-
-    }
-
-    auto bandwidth = std::max_element(diff.begin(), diff.end());
-
-    return *bandwidth;
-
-}

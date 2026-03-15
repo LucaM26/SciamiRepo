@@ -8,9 +8,9 @@
 #include <TGraph.h>
 #include <TCanvas.h>
 
-#include "FlagClass.h"
+//#include "FlagClass.h"
 #include "Rate.h"
-#include "Hist.h"
+//#include "Hist.h"
 
 //Crea il file .root con i dati del FIFO
 
@@ -70,8 +70,8 @@ void Sciami(const char * path, const char* kw){
     TTree *t = (TTree*)f->Get("T");
 
     //Stringa di scelta
-    if (strcmp(kw, "rate") == 0) {rateGraph(t, 100);}
+    if (strcmp(kw, "rate") == 0) {rateMain(t, 6, 100);}
 
-    if (strcmp(kw, "hist") == 0) {histGraph(t);}
+    if (strcmp(kw, "hist") == 0) {histMain(t, 6);}
 
 }

@@ -1,32 +1,19 @@
 #ifndef RATE_H
 #define RATE_H
 
-#include <vector>
-#include <array>
-#include <stdexcept>
-
 #include <TTree.h>
+#include <TGraphErrors.h>
 
-struct TelData{
-    std::vector<double> tel_08;
-    std::vector<double> tel_06;
-    std::vector<double> tel_04;
+struct Container {
 
-    std::vector<double>& operator[](size_t idx) {
-        switch(idx) {
-            case 0: return tel_08;
-            case 1: return tel_06;
-            case 2: return tel_04;
-            default: throw std::out_of_range("Indice fuori dai limiti");
-        }
-    }
+    std::vector<double> y, y_err;
 
-    size_t size() const { return 3; }
+    void Fill(double y_val, double yerr_val);
+
 };
 
+TGraphErrors* rateGraph (std::vector<double> x, std::vector<double> y,std::vector<double> x_err, std::vector<double> y_err);
 
-void rateGraph(TTree *t, double Dt);
-
-double calculate_band(const std::vector<double>& v);
+void rateMain(TTree *t, int n_ch, double Dt);
 
 #endif

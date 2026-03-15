@@ -11,15 +11,15 @@
 #include <TAxis.h>
 #include <TF1.h>
 #include <TTree.h>
+#include <TFile.h>
 
-#include "FlagClass.h"
-#include "Hist.h"
-
-void histFit(TH1F *h) {
+void histFit(TH1F *h, std::string fname) {
 
     TF1 *f = new TF1("f", "[0] * exp(-[1]*x) + [2]", 0, 4);
 
-    f->SetParameters(1e3, 5, 0);
+    ULong64_t Max_est= h->GetMaximum();
+
+    f->SetParameters(Max_est, 5, 0);
 
     h->Fit("f", "ILS");
     
@@ -27,10 +27,16 @@ void histFit(TH1F *h) {
     h->Draw();
     C->Update();
 
+    TFile* file = new TFile(fname.c_str(), "RECREATE");
+
+    h->Write();
+    file->Close();
+
+    delete C;
 
 }
 
-void histGraph(TTree *t){
+void histMain(TTree* t, int n_ch){
 
     //Allestimento del Tree
 
@@ -42,69 +48,53 @@ void histGraph(TTree *t){
 
     //Numero di eventi
 
-    Long64_t N = t->GetEntries();
+    ULong64_t N = t->GetEntries();
 
-    //Calibrazione del FIFO
+    //Creo gli istogrammi
 
-    double c = 5e-9;
+    std::vector<TH1F*> hist(n_ch);
 
-    //Trio di istogrammi
+    for (int i = 0; i < n_ch; i++){
 
-    TH1F *h_08 = new TH1F("Setup 08", "Tempi fra eventi successivi, setup08", 100, 0, 4);
+        hist[i] = new TH1F(Form("h_ch%d", i), Form("Differenze temporali ch %d;time", i), 100, 0, 4);
+    }
 
-    TH1F *h_06 = new TH1F("Setup 06", "Tempi fra eventi successivi, setup06", 100, 0, 4);
-
-    TH1F *h_04 = new TH1F("Setup 04", "Tempi fra eventi successivi, setup04", 100, 0, 4);
-
-    //Loop sugli eventi
-
-    for (Long64_t k = 0; k < N; k++){
+    for (ULong64_t k = 0; k < N; k++){
 
         t->GetEntry(k);
 
-        double t_1 = time;
+        if (ch == 2147483648){continue;}
 
-        Flag Channel;
+        for (int bit = 0; bit < n_ch; bit++){
 
-        BoolTrio FirstMask(Channel.IsTriple08(ch), Channel.IsTriple06(ch), Channel.IsTriple04(ch));
+            if ((ch >> bit) & 1){
 
-        if (Channel.IsResetKW(ch)) {continue;}
-        if (!FirstMask.Or()) {continue;} 
+                ULong64_t start = time;
 
-        if (FirstMask.Or()) {
+                ULong64_t h = 1;
 
-            Long64_t h = k+1;
+                while (k + h < N) {
 
-            BoolTrio SecondMask;
+                    t->GetEntry(k+h);
 
-            while (h < N) {
+                    if ((ch >> bit) & 1) {break;}
 
-                t->GetEntry(h);
-                Flag Temp_Ch;
+                    h++;
+                }
 
-                SecondMask.update(Temp_Ch.IsTriple08(ch),Temp_Ch.IsTriple06(ch),Temp_Ch.IsTriple04(ch));
+                ULong64_t stop = time;
 
-                if (FirstMask.Sum(SecondMask)) break;
-
-                h++;
-            }
-
-            if (h >= N) break;
-
-            double t_2 = time;
-
-            if (FirstMask.check_first(SecondMask)) {h_08->Fill(c*(t_2-t_1));}
-
-            if (FirstMask.check_second(SecondMask)) {h_06->Fill(c*(t_2-t_1));}
-
-            if (FirstMask.check_third(SecondMask)) {h_04->Fill(c*(t_2-t_1));}
+                hist[bit]->Fill((stop-start)*5e-9);
 
             }
+
+        }
     }
 
-    histFit(h_08);
-    histFit(h_06);
-    histFit(h_04);
+    for (int j = 0; j < n_ch; j++){
+
+        histFit(hist[j], Form("h_ch%d.root", j));
+
+    }
 
 }
-
