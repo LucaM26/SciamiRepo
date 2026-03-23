@@ -14,33 +14,11 @@
 #include <TTree.h>
 #include <TAxis.h>
 
-#include "FlagClass.h"
 
-struct BoolTrio {
 
-    bool a, b, c;
+void histFit(TH1F *h, std::string fname);
 
-    BoolTrio(bool x = false, bool y = false, bool z = false)
-    : a(x), b(y), c(z) {}
+void histMain(TTree *t, int n_ch);
 
-    bool check_first (const BoolTrio&other) const {return a && other.a;}
-
-    bool check_second (const BoolTrio&other) const {return b && other.b;}
-
-    bool check_third (const BoolTrio&other) const {return c && other.c;}
-
-    bool Or() const {return a  || b || c;}
-
-    bool Sum(const BoolTrio&other) {return a && other.a || b && other.b || c && other.c;}
-
-    void update(bool x, bool y, bool z) {
-        a = x;
-        b = y;
-        c = z;
-    }
-
-};
-
-void histGraph(TTree *t);
 
 #endif
