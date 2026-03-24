@@ -5,6 +5,7 @@
 
 
 //runna con MC(1000000, 3.5)
+
 class ray {
     double cosTheta;
     double phi;
@@ -54,9 +55,9 @@ public:
 };
 
 void MC(int n, double exponent) {
-    ray r(exponent, .50, .28);
-    detector down(0., .40, 0., .20, -0.025);
-    detector up(0., .58, 0., .21, 0.013);
+    ray r(exponent, .50, .40);
+    detector down(0., .50, 0., .40, -0.205);
+    detector up(0., .50, 0., .40, 0.205);
 
     TH2D* hUp = new TH2D("hUp",
         "Intercette detector UP; x [m]; y [m]",
@@ -71,7 +72,9 @@ void MC(int n, double exponent) {
     int pairs = 0, triples = 0;
 
     for(int i = 0; i < n; i++) {
+
         r.Throw(); 
+
         pairs   += up.Check(r);
         triples += down.Check(r) && up.Check(r);
 

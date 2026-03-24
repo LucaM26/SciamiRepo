@@ -12,7 +12,7 @@ struct Container {
 
 };
 
-TGraphErrors* rateGraph (std::vector<double> x, std::vector<double> y,std::vector<double> x_err, std::vector<double> y_err);
+TGraphErrors* rateGraph (const std::vector<double> &x,const std::vector<double> &y,const std::vector<double> &x_err,const std::vector<double> &y_err);
 
 void rateMain(TTree *t, int n_ch, double Dt);
 
