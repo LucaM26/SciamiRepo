@@ -60,12 +60,12 @@ void MC(int n, double exponent) {
     detector up(0., .50, 0., .40, 0.205);
 
     TH2D* hUp = new TH2D("hUp",
-        "Intercette detector UP; x [m]; y [m]",
+        "Intercette detector UP T2004; x [m]; y [m]",
         100, 0., .50,
         100, 0., .28);
 
     TH2D* hDown = new TH2D("hDown",
-        "Intercette detector DOWN; x [m]; y [m]",
+        "Intercette detector DOWN T2004; x [m]; y [m]",
         100, 0., .50,
         100, 0., .28);
 

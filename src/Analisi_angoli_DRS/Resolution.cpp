@@ -1058,6 +1058,237 @@ void Summary() {
     std::cout << "====================================\n" << std::endl;
 }
 
+void Integral(int ievt = -1) {
+    if (ievt < 0) ievt = gCurrentEvent;
+    if (ievt < 0 || ievt >= (int)gEvents.size()) return;
+
+    EventData &evt = gEvents[ievt];
+    int nch = std::min(evt.nchannels, 3);
+
+    TCanvas *cint = new TCanvas("cIntegral",
+        Form("Integrale  |  Ev. %d  |  %s", evt.serial, gFilename.c_str()),
+        1200, 500);
+    cint->Divide(nch, 1);
+
+    for (int i = 0; i < nch; i++) {
+        cint->cd(i + 1);
+        gPad->SetGrid(1, 1);
+
+        ChannelData &cd = evt.ch[i];
+        int ns = cd.nsamples;
+
+        // Integrazione numerica (trapezio)
+        std::vector<double> t_int(ns), Q(ns, 0.0);
+        t_int[0] = cd.time[0];
+        for (int s = 1; s < ns; s++) {
+            double dt       = cd.time[s]  - cd.time[s-1];
+            double v_bl_s   = cd.baseline - cd.voltage[s];
+            double v_bl_sm1 = cd.baseline - cd.voltage[s-1];
+            Q[s]     = Q[s-1] + 0.5 * (v_bl_s + v_bl_sm1) * dt;
+            t_int[s] = cd.time[s];
+        }
+
+        // Parametri iniziali definiti PRIMA del fit
+        double Q_tot    = Q[ns - 1];
+        double t_mid    = cd.t_timing > -900.0 ? cd.t_timing : cd.t_min;
+        double t_fit_lo = cd.time[NBL_SAMPLES];
+        double t_fit_hi = cd.t_min + 20.0;
+        if (t_fit_hi > cd.time[ns-1]) t_fit_hi = cd.time[ns-1];
+
+        // TGraph dell'integrale
+        TGraph *gr = new TGraph(ns, t_int.data(), Q.data());
+
+        std::string label = gChannelLabels.count(evt.channel_ids[i])
+                            ? gChannelLabels[evt.channel_ids[i]]
+                            : Form("CHN%d", evt.channel_ids[i]);
+
+        gr->SetTitle(Form("%s  |  Integrale;t [ns];Q [mV#upointns]", label.c_str()));
+        gr->SetLineColor(CH_COLORS[i % 4]);
+        gr->SetLineWidth(2);
+        gr->Draw("AL");
+
+        // Fit sigmoide — nome univoco per canale per evitare conflitti ROOT
+        TF1 *fsig = new TF1(Form("fsig_%d", i),
+            "[0] / (1.0 + TMath::Exp(-[1]*(x - [2])))",
+            t_fit_lo, t_fit_hi);
+        fsig->SetParNames("A", "k", "t0");
+        fsig->SetParameters(Q_tot, 0.5, t_mid);
+        fsig->SetParLimits(0, 0.0,  Q_tot * 2.5);
+        fsig->SetParLimits(1, 0.01, 20.0);
+
+        gr->Fit(fsig, "RQ");
+
+        fsig->SetLineColor(kMagenta+1);
+        fsig->SetLineWidth(2);
+        fsig->Draw("same");
+
+        double A_fit  = fsig->GetParameter(0);
+        double k_fit  = fsig->GetParameter(1);
+        double t0_fit = fsig->GetParameter(2);
+        double A_err  = fsig->GetParError(0);
+        double t_rise = (k_fit > 1e-6) ? TMath::Log(9.0) / k_fit : -1.0;
+
+        // Annotazioni nel pad
+        TLatex *ltx = new TLatex();
+        ltx->SetNDC();
+        ltx->SetTextFont(42);
+        ltx->SetTextSize(0.046);
+        ltx->SetTextColor(CH_COLORS[i % 4]);
+        ltx->DrawLatex(0.55, 0.38, Form("A = %.1f #pm %.1f", A_fit, A_err));
+        ltx->DrawLatex(0.55, 0.30, Form("t_{0} = %.2f ns", t0_fit));
+        if (t_rise > 0)
+            ltx->DrawLatex(0.55, 0.22, Form("t_{rise} = %.2f ns", t_rise));
+
+        // Linea orizzontale al plateau
+        TLine *lq = new TLine(cd.time[0], Q_tot, cd.time[ns-1], Q_tot);
+        lq->SetLineColor(kGray+1);
+        lq->SetLineStyle(7);
+        lq->SetLineWidth(1);
+        lq->Draw("same");
+
+        gPad->Modified();
+        gPad->Update();
+    }
+
+    cint->Modified();
+    cint->Update();
+}
+
+void AmpiHist() {
+
+    if (gEvents.empty()) {
+        std::cout << "[ERRORE] Nessun evento caricato. Esegui prima Resolution()." << std::endl;
+        return;
+    }
+
+    int ntot = gEvents.size();
+    int nch  = std::min(gEvents[0].nchannels, 3);
+
+    // Stima range asse X dagli integrali esistenti
+    double A_max = 0.0;
+    for (auto &e : gEvents) {
+        for (int i = 0; i < nch; i++) {
+            if (e.ch[i].has_pulse && e.ch[i].integral > A_max)
+                A_max = e.ch[i].integral;
+        }
+    }
+    if (A_max < 1.0) A_max = 5000.0;
+    double A_range = A_max * 1.3;
+
+    // Istogrammi per canale
+    TH1F *hA[3] = {};
+    for (int i = 0; i < nch; i++) {
+        std::string lbl = gChannelLabels.count(i+1)
+                          ? gChannelLabels[i+1] : Form("CHN%d", i+1);
+        hA[i] = new TH1F(Form("hA_%d", i),
+                         Form("Ampiezza sigmoide  |  %s;A [mV#upointns];Conteggi",
+                              lbl.c_str()),
+                         80, 0.0, A_range);
+        hA[i]->SetFillColor(CH_COLORS[i % 4]);
+        hA[i]->SetFillStyle(3004);
+        hA[i]->SetLineColor(CH_COLORS[i % 4]);
+        hA[i]->SetLineWidth(2);
+    }
+
+    // Loop eventi: integrazione + fit sigmoide
+    int n_fitted[3] = {}, n_failed[3] = {};
+
+    for (auto &e : gEvents) {
+        for (int i = 0; i < nch; i++) {
+            ChannelData &cd = e.ch[i];
+
+            if (!cd.has_pulse)         { n_failed[i]++; continue; }
+            if (cd.t_timing < -900.0)  { n_failed[i]++; continue; }
+            int ns = cd.nsamples;
+            if (ns < 20)               { n_failed[i]++; continue; }
+
+            // Integrazione trapezio
+            std::vector<double> t_arr(ns), Q_arr(ns, 0.0);
+            t_arr[0] = cd.time[0];
+            for (int s = 1; s < ns; s++) {
+                double dt    = cd.time[s]  - cd.time[s-1];
+                double f_s   = cd.baseline - cd.voltage[s];
+                double f_sm1 = cd.baseline - cd.voltage[s-1];
+                Q_arr[s] = Q_arr[s-1] + 0.5 * (f_s + f_sm1) * dt;
+                t_arr[s] = cd.time[s];
+            }
+            double Q_tot = Q_arr[ns-1];
+            if (Q_tot < 1.0) { n_failed[i]++; continue; }
+
+            TGraph gr_int(ns, t_arr.data(), Q_arr.data());
+
+            double t_mid    = cd.t_timing;
+            double t_fit_lo = cd.time[NBL_SAMPLES];
+            double t_fit_hi = cd.t_min + 20.0;
+            if (t_fit_hi > cd.time[ns-1]) t_fit_hi = cd.time[ns-1];
+
+            // Nome univoco per evento e canale
+            TF1 fsig(Form("fsig_%d_%d", (int)(&e - &gEvents[0]), i),
+                     "[0] / (1.0 + TMath::Exp(-[1]*(x - [2])))",
+                     t_fit_lo, t_fit_hi);
+            fsig.SetParNames("A", "k", "t0");
+            fsig.SetParameters(Q_tot, 0.5, t_mid);
+            fsig.SetParLimits(0, 0.0,  Q_tot * 2.5);
+            fsig.SetParLimits(1, 0.01, 20.0);
+
+            TFitResultPtr res = gr_int.Fit(&fsig, "RQN");
+            if ((int)res != 0) { n_failed[i]++; continue; }
+
+            double A_fit = fsig.GetParameter(0);
+            if (A_fit < 1.0 || A_fit > A_range) { n_failed[i]++; continue; }
+
+            hA[i]->Fill(A_fit);
+            n_fitted[i]++;
+        }
+    }
+
+    // Canvas con istogrammi affiancati
+    TCanvas *cA = new TCanvas("cAmpiHist",
+        Form("Distribuzione ampiezze sigmoide  |  %s", gFilename.c_str()),
+        1200, 500);
+    cA->Divide(nch, 1);
+
+    std::cout << "\n=== DISTRIBUZIONE AMPIEZZE (fit sigmoide) ===" << std::endl;
+    std::cout << "  File: " << gFilename << std::endl;
+    std::cout << "  Eventi totali: " << ntot << std::endl;
+
+    for (int i = 0; i < nch; i++) {
+        cA->cd(i + 1);
+        gPad->SetGrid(1, 1);
+        hA[i]->Draw("HIST");
+
+        double mean  = hA[i]->GetMean();
+        double sigma = hA[i]->GetStdDev();
+
+        TLatex ltx;
+        ltx.SetNDC();
+        ltx.SetTextFont(42);
+        ltx.SetTextSize(0.048);
+        ltx.SetTextColor(CH_COLORS[i % 4]);
+        ltx.DrawLatex(0.55, 0.80, Form("#mu = %.1f",    mean));
+        ltx.DrawLatex(0.55, 0.72, Form("#sigma = %.1f", sigma));
+        ltx.SetTextColor(kGray+1);
+        ltx.SetTextSize(0.038);
+        ltx.DrawLatex(0.55, 0.63, Form("N_{fit} = %d",  n_fitted[i]));
+        ltx.DrawLatex(0.55, 0.56, Form("N_{fail} = %d", n_failed[i]));
+
+        gPad->Modified();
+        gPad->Update();
+
+        std::string lbl = gChannelLabels.count(i+1)
+                          ? gChannelLabels[i+1] : Form("CHN%d", i+1);
+        std::cout << "\n  " << lbl << ":" << std::endl;
+        std::cout << "    N fit ok  : " << n_fitted[i] << std::endl;
+        std::cout << "    N falliti : " << n_failed[i] << std::endl;
+        std::cout << "    Media A   : " << Form("%.2f mV*ns", mean)  << std::endl;
+        std::cout << "    Sigma A   : " << Form("%.2f mV*ns", sigma) << std::endl;
+    }
+
+    std::cout << "\n=============================================\n" << std::endl;
+
+    cA->Modified();
+    cA->Update();
+}
 
 // ================== OVERLAY: tutti i canali =================================
 // Overlay(): sovrappone TUTTI i canali dell'evento corrente su un unico grafico.
@@ -1350,5 +1581,6 @@ int main(int argc, char** argv) {
     app.Run();     // Entra nel loop degli eventi (blocca finché non si chiude la finestra)
     return 0;
 }
+
 #endif
 #endif

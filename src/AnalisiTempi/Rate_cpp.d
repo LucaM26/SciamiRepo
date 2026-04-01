@@ -1,7 +1,8 @@
 
 # DO NOT DELETE
 
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TGraph.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TROOT.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDirectory.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TNamed.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TObject.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/Rtypes.h
@@ -24,6 +25,25 @@
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TString.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TMathBase.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/TypeTraits.hxx
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TClass.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDictionary.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ESTLType.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TSchemaRule.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TObjArray.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TSeqCollection.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TCollection.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TIterator.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualRWMutex.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualMutex.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/RRangeCast.hxx
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/RSpan.hxx
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/span.hxx
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TUUID.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TList.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TBuffer.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDataType.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/Bytes.h
+./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TGraph.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TAttLine.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TAttFill.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TAttMarker.h
@@ -35,20 +55,8 @@
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualPad.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TAttPad.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TQObject.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TList.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TSeqCollection.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TCollection.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TIterator.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualRWMutex.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualMutex.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/RRangeCast.hxx
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/RSpan.hxx
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ROOT/span.hxx
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualQConnection.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TInterpreter.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDataType.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDictionary.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/ESTLType.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TInterpreterValue.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/GuiTypes.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/Buttons.h
@@ -60,13 +68,6 @@
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TArrayD.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TArray.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TArrayI.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TClass.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TSchemaRule.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TObjArray.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TDirectory.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TUUID.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TBuffer.h
-./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/Bytes.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TVirtualTreePlayer.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TBranch.h
 ./src/AnalisiTempi/Rate_cpp.so: /snap/root-framework/954/usr/local/include/TBranchCacheInfo.h

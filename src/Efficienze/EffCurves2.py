@@ -9,19 +9,19 @@ def eff_curve(S_1, S_2, S_3, D, T, name):
 
     if name == "PMT01":
 
-        DF = S_2 * S_3 * 1e-11 
+        DF = S_2 * S_3 * 1e-9 
 
         err_DF = DF * np.sqrt(1/S_2 + 1/S_3)
 
     if name == "PMT02":
 
-        DF = S_1 * S_3 * 1e-11
+        DF = S_1 * S_3 * 1e-9
 
         err_DF = DF * np.sqrt(1/S_1 + 1/S_3) 
     
     if name == "PMT03":
 
-        DF = S_2 * S_1 * 1e-11
+        DF = S_2 * S_1 * 1e-9
 
         err_DF = DF * np.sqrt(1/S_2 + 1/S_1)
 
@@ -72,6 +72,8 @@ if __name__ == "__main__":
         r = DF / D
 
         err_r = r * np.sqrt((err_DF/DF)**2 + 1/D) 
+
+        print((1-r)*100)
         
         ax.errorbar(HV, eff, eff_err, fmt = '.' , capsize = 3)
 
