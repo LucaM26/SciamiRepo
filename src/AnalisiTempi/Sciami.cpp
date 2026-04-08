@@ -91,6 +91,8 @@ void Sciami(const char * path, const char* kw){
 
     if (strcmp(kw, "hist") == 0) {histMain(t, 12);}
 
+    if (strcmp(kw, "hist2") == 0) {histTriple(t, 3);}
+
     f->Close();
     delete f;
 

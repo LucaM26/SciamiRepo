@@ -1173,7 +1173,7 @@ void AmpiHist() {
         }
     }
     if (A_max < 1.0) A_max = 5000.0;
-    double A_range = A_max * 1.3;
+    double A_range = A_max * 0.25;
 
     // Istogrammi per canale
     TH1F *hA[3] = {};
@@ -1197,6 +1197,7 @@ void AmpiHist() {
         for (int i = 0; i < nch; i++) {
             ChannelData &cd = e.ch[i];
 
+            if (cd.is_clipped) { n_failed[i]++; continue; }
             if (!cd.has_pulse)         { n_failed[i]++; continue; }
             if (cd.t_timing < -900.0)  { n_failed[i]++; continue; }
             int ns = cd.nsamples;
